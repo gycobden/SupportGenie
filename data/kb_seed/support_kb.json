@@ -1,0 +1,77 @@
+[
+  {
+    "id": "faq_01",
+    "title": "Password Reset",
+    "content": "Users can reset their password from Settings > Security. If Two-Factor Authentication (2FA) is enabled, a backup code or registered device is required."
+  },
+  {
+    "id": "faq_02",
+    "title": "Email Verification Failed",
+    "content": "If you see 'Verification link expired', request a new link from Profile > Email. Verification links expire in 10 minutes."
+  },
+  {
+    "id": "faq_03",
+    "title": "Billing and Subscription",
+    "content": "Basic plan: $10/user/month. Pro plan: $25/user/month with audit logs and SSO. Enterprise: custom pricing with SLA and dedicated support."
+  },
+  {
+    "id": "faq_04",
+    "title": "SSO Login Issues",
+    "content": "SSO failures often occur if the identity provider metadata is outdated. Refresh SAML metadata under Admin Portal > SSO Settings."
+  },
+  {
+    "id": "faq_05",
+    "title": "Exporting Reports",
+    "content": "Admins can export audit reports in CSV or JSON from the Analytics tab. Exports over 100 MB are automatically compressed."
+  },
+  {
+    "id": "faq_06",
+    "title": "API Rate Limits",
+    "content": "Each API key is limited to 200 requests per minute. For bulk imports, use the /batch endpoint supporting up to 10,000 records per request."
+  },
+  {
+    "id": "faq_07",
+    "title": "System Outage Notification",
+    "content": "Outages and maintenance updates are posted at status.productgenie.io. Users can subscribe via email or RSS feed."
+  },
+  {
+    "id": "faq_08",
+    "title": "Dark Mode Not Saving",
+    "content": "Dark mode preferences are stored in browser local storage. If dark mode resets on refresh, ensure cookies and local storage are not being cleared. Try a different browser or disable extensions that manage storage."
+  },
+  {
+    "id": "faq_09",
+    "title": "Email Templates Not Loading",
+    "content": "If email templates fail to load in the editor, try clearing the cache from Settings > Advanced > Clear Cache. If the issue persists, disable browser extensions and retry. Templates require JavaScript to be enabled."
+  },
+  {
+    "id": "faq_10",
+    "title": "CSV Upload Timeout",
+    "content": "CSV uploads that exceed 5 MB may time out on slow connections. Split large files into smaller batches under 5 MB. For enterprise users, the /batch API endpoint supports uploads up to 50 MB."
+  },
+  {
+    "id": "faq_11",
+    "title": "Two-Factor Authentication Setup",
+    "content": "Enable 2FA from Settings > Security > Two-Factor Authentication. Supported methods include TOTP apps (e.g., Google Authenticator, Authy) and SMS. Save your backup codes in a secure location."
+  },
+  {
+    "id": "faq_12",
+    "title": "User Role Permissions",
+    "content": "Admins can manage user roles under Admin Portal > User Management. Available roles are: Viewer (read-only), Editor (read/write), Admin (full access). Role changes take effect immediately."
+  },
+  {
+    "id": "faq_13",
+    "title": "Webhook Configuration",
+    "content": "Webhooks can be configured under Settings > Integrations > Webhooks. Supported events include user.created, report.exported, and ticket.updated. Webhook payloads are signed with HMAC-SHA256."
+  },
+  {
+    "id": "faq_14",
+    "title": "Session Timeout",
+    "content": "Sessions expire after 30 minutes of inactivity by default. Admins can extend the timeout up to 8 hours under Admin Portal > Security Settings. Users will be prompted to re-authenticate after expiry."
+  },
+  {
+    "id": "faq_15",
+    "title": "Data Export Compliance",
+    "content": "All data exports are logged for compliance purposes. GDPR data deletion requests can be submitted via Settings > Privacy > Data Request. Requests are processed within 72 hours."
+  }
+]
