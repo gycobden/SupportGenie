@@ -2,8 +2,18 @@
 Agent logic for SupportGenie.
 
 Orchestrates RAG retrieval, tool calling, and LLM response generation.
-Supports any OpenAI-compatible API (OpenAI, Groq, Ollama, etc.).
-Set OPENAI_API_KEY and optionally OPENAI_BASE_URL / OPENAI_MODEL in your environment.
+
+Supported LLM providers (in priority order):
+  1. OpenAI (or any OpenAI-compatible endpoint):
+       OPENAI_API_KEY=sk-...
+       OPENAI_BASE_URL=https://api.openai.com/v1   (optional override)
+       OPENAI_MODEL=gpt-4o-mini                    (optional override)
+  2. Google Gemini via its OpenAI-compatible endpoint:
+       GEMINI_API_KEY=AIza...
+       GEMINI_MODEL=gemini-2.0-flash               (optional override)
+
+If neither key is set, the agent falls back to a rule-based RAG-only mode
+that requires no external API and still demonstrates retrieval and ticket creation.
 """
 
 from __future__ import annotations
@@ -57,14 +67,44 @@ _TOOLS_SCHEMA = [
 ]
 
 
+_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+_GEMINI_DEFAULT_MODEL = "gemini-2.0-flash"
+
+
+def _resolve_provider() -> tuple[str, str, str] | None:
+    """
+    Determine which LLM provider to use based on available environment variables.
+
+    Returns (api_key, base_url, model) for the first configured provider, or
+    None if no provider is configured.
+
+    Priority:
+      1. OPENAI_API_KEY  — OpenAI or any OpenAI-compatible endpoint.
+      2. GEMINI_API_KEY  — Google Gemini via its OpenAI-compatible REST endpoint.
+    """
+    openai_key = os.getenv("OPENAI_API_KEY", "")
+    if openai_key:
+        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        return openai_key, base_url, model
+
+    gemini_key = os.getenv("GEMINI_API_KEY", "")
+    if gemini_key:
+        model = os.getenv("GEMINI_MODEL", _GEMINI_DEFAULT_MODEL)
+        return gemini_key, _GEMINI_BASE_URL, model
+
+    return None
+
+
 def _get_openai_client():
-    """Lazily create an OpenAI client."""
+    """Lazily create an OpenAI client for the resolved provider."""
     from openai import OpenAI  # type: ignore
 
-    return OpenAI(
-        api_key=os.getenv("OPENAI_API_KEY", ""),
-        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-    )
+    provider = _resolve_provider()
+    if provider is None:
+        raise RuntimeError("No LLM API key is configured.")
+    api_key, base_url, _model = provider
+    return OpenAI(api_key=api_key, base_url=base_url)
 
 
 def _llm_chat(messages: List[Dict[str, Any]], use_tools: bool = True) -> Dict[str, Any]:
@@ -73,7 +113,10 @@ def _llm_chat(messages: List[Dict[str, Any]], use_tools: bool = True) -> Dict[st
       - 'content': str  (the text reply, may be None if a tool was called)
       - 'tool_call': dict | None  (name + arguments if a tool was invoked)
     """
-    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    provider = _resolve_provider()
+    if provider is None:
+        raise RuntimeError("No LLM API key is configured.")
+    _api_key, _base_url, model = provider
     client = _get_openai_client()
 
     kwargs: Dict[str, Any] = {"model": model, "messages": messages}
@@ -156,11 +199,11 @@ def chat(user_message: str, history: List[Dict[str, str]] | None = None) -> Dict
     messages.append({"role": "user", "content": user_message})
 
     # 3. Call LLM
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    provider = _resolve_provider()
     ticket = None
     answer = ""
 
-    if api_key:
+    if provider is not None:
         try:
             result = _llm_chat(messages, use_tools=True)
 

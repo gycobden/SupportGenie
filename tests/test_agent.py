@@ -140,6 +140,7 @@ class TestAgentFallback:
     def setup_method(self):
         """Ensure no API key is set so fallback path is used."""
         os.environ.pop("OPENAI_API_KEY", None)
+        os.environ.pop("GEMINI_API_KEY", None)
 
     def test_chat_returns_required_keys(self):
         from app.agent import chat
@@ -218,6 +219,76 @@ class TestTicketIntentDetection:
         from app.agent import _is_ticket_request
 
         assert _is_ticket_request("What are your pricing options?") is False
+
+
+# ── Provider resolution tests ────────────────────────────────────────────────
+
+class TestResolveProvider:
+    """Tests for _resolve_provider(): verify correct priority and env var mapping."""
+
+    def setup_method(self):
+        os.environ.pop("OPENAI_API_KEY", None)
+        os.environ.pop("OPENAI_BASE_URL", None)
+        os.environ.pop("OPENAI_MODEL", None)
+        os.environ.pop("GEMINI_API_KEY", None)
+        os.environ.pop("GEMINI_MODEL", None)
+
+    def teardown_method(self):
+        os.environ.pop("OPENAI_API_KEY", None)
+        os.environ.pop("OPENAI_BASE_URL", None)
+        os.environ.pop("OPENAI_MODEL", None)
+        os.environ.pop("GEMINI_API_KEY", None)
+        os.environ.pop("GEMINI_MODEL", None)
+
+    def test_no_key_returns_none(self):
+        from app.agent import _resolve_provider
+
+        assert _resolve_provider() is None
+
+    def test_openai_key_uses_openai_endpoint(self):
+        from app.agent import _resolve_provider
+
+        os.environ["OPENAI_API_KEY"] = "sk-test"
+        key, base_url, model = _resolve_provider()
+        assert key == "sk-test"
+        assert "openai.com" in base_url
+        assert model == "gpt-4o-mini"
+
+    def test_openai_custom_base_url(self):
+        from app.agent import _resolve_provider
+
+        os.environ["OPENAI_API_KEY"] = "sk-test"
+        os.environ["OPENAI_BASE_URL"] = "https://api.groq.com/openai/v1"
+        os.environ["OPENAI_MODEL"] = "llama3-8b-8192"
+        key, base_url, model = _resolve_provider()
+        assert base_url == "https://api.groq.com/openai/v1"
+        assert model == "llama3-8b-8192"
+
+    def test_gemini_key_uses_gemini_endpoint(self):
+        from app.agent import _resolve_provider, _GEMINI_BASE_URL
+
+        os.environ["GEMINI_API_KEY"] = "AIzatest"
+        key, base_url, model = _resolve_provider()
+        assert key == "AIzatest"
+        assert base_url == _GEMINI_BASE_URL
+        assert "gemini" in model
+
+    def test_gemini_model_override(self):
+        from app.agent import _resolve_provider
+
+        os.environ["GEMINI_API_KEY"] = "AIzatest"
+        os.environ["GEMINI_MODEL"] = "gemini-1.5-pro"
+        _key, _base_url, model = _resolve_provider()
+        assert model == "gemini-1.5-pro"
+
+    def test_openai_takes_priority_over_gemini(self):
+        from app.agent import _resolve_provider
+
+        os.environ["OPENAI_API_KEY"] = "sk-openai"
+        os.environ["GEMINI_API_KEY"] = "AIzagemini"
+        key, base_url, _model = _resolve_provider()
+        assert key == "sk-openai"
+        assert "openai.com" in base_url
 
 
 # ── FastAPI endpoint tests ───────────────────────────────────────────────────
