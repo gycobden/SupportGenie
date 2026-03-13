@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from app.agent import chat
 
 app = FastAPI(title="SupportGenie", version="1.0.0")
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 # ---------------------------------------------------------------------------
 # Request / Response models

@@ -8,21 +8,21 @@
     /* ── Reset & base ───────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:          #0f1117;
-      --surface:     #1a1d27;
-      --surface2:    #252836;
-      --border:      #2e3246;
-      --accent:      #6c63ff;
-      --accent-glow: rgba(108, 99, 255, 0.35);
-      --user-bg:     #6c63ff;
-      --bot-bg:      #252836;
-      --text:        #e2e4f0;
-      --text-muted:  #8b90a8;
-      --ticket-bg:   #0d2137;
-      --ticket-border:#1d5fa8;
-      --cite-bg:     rgba(108,99,255,0.18);
-      --cite-color:  #a89fff;
-      --source-bg:   rgba(108,99,255,0.07);
+      --bg:          #100506;
+      --surface:     #1a0b0e;
+      --surface2:    #241014;
+      --border:      #5b2a33;
+      --accent:      #b91c1c;
+      --accent-glow: rgba(185, 28, 28, 0.35);
+      --user-bg:     #7f3b45;
+      --bot-bg:      #241014;
+      --text:        #fff4f5;
+      --text-muted:  #e6cfd3;
+      --ticket-bg:   #2b1015;
+      --ticket-border:#7f1d1d;
+      --cite-bg:     rgba(185, 28, 28, 0.18);
+      --cite-color:  #ffd3d9;
+      --source-bg:   rgba(185, 28, 28, 0.08);
       --radius:      14px;
       --radius-sm:   8px;
     }
@@ -52,8 +52,13 @@
       background: var(--accent);
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
+      overflow: hidden;
       box-shadow: 0 0 14px var(--accent-glow);
+    }
+    .logo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
     }
     header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em; }
     header p  { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
@@ -70,6 +75,107 @@
       display: flex;
       flex: 1;
       overflow: hidden;
+    }
+
+    /* ── Left info sidebar ─────────────────────────────────────── */
+    .info-sidebar {
+      position: relative;
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 18px;
+      overflow-y: auto;
+      transition: width 0.2s ease, padding 0.2s ease;
+    }
+    .info-sidebar-toggle {
+      position: absolute;
+      top: 14px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+    }
+    .info-sidebar-toggle:hover {
+      background: rgba(185, 28, 28, 0.12);
+      color: var(--text);
+    }
+    .info-sidebar-content {
+      transition: opacity 0.15s ease;
+    }
+    .info-sidebar.collapsed {
+      width: 56px;
+      padding: 20px 10px;
+      overflow: hidden;
+    }
+    .info-sidebar.collapsed .info-sidebar-content {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .info-sidebar.collapsed .info-sidebar-toggle {
+      right: 14px;
+      transform: rotate(180deg);
+    }
+    .info-logo {
+      width: 220px;
+      max-width: 100%;
+      overflow: visible;
+      margin-bottom: 12px;
+    }
+    .info-logo img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .info-sidebar h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .info-sidebar p {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+    .ticket-help {
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      padding: 10px 12px;
+    }
+    .ticket-help summary {
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #f8e7b5;
+      list-style: none;
+    }
+    .ticket-help summary::-webkit-details-marker {
+      display: none;
+    }
+    .ticket-help summary::after {
+      content: ' +';
+      color: #f8e7b5;
+      font-weight: 700;
+    }
+    .ticket-help[open] summary::after {
+      content: ' -';
+    }
+    .ticket-help p {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
     }
 
     /* ── Chat column ─────────────────────────────────────────────── */
@@ -105,9 +211,11 @@
       margin-top: 40px;
     }
     .welcome .logo-lg {
-      font-size: 48px;
+      width: 72px;
+      height: 72px;
       margin-bottom: 16px;
-      display: block;
+      display: inline-block;
+      object-fit: contain;
     }
     .welcome h2 { font-size: 1.5rem; margin-bottom: 8px; }
     .welcome p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
@@ -129,7 +237,7 @@
     .chip:hover {
       border-color: var(--accent);
       color: var(--text);
-      background: rgba(108,99,255,0.12);
+      background: rgba(185, 28, 28, 0.12);
     }
 
     /* Bubbles */
@@ -149,9 +257,27 @@
       font-size: 16px;
       flex-shrink: 0;
       align-self: flex-end;
+      overflow: hidden;
     }
-    .bubble-row.user .avatar  { background: var(--accent); }
-    .bubble-row.bot  .avatar  { background: var(--surface2); border: 1px solid var(--border); }
+    .bubble-row.user .avatar  { background: var(--user-bg); }
+    .bubble-row.bot  .avatar  {
+      width: 42px;
+      height: 42px;
+      background: transparent;
+      border: none;
+      overflow: visible;
+    }
+    .avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .avatar .assistant-lamp {
+      transform: scaleX(-1);
+      width: 150%;
+      height: 150%;
+      object-fit: contain;
+    }
 
     .bubble {
       padding: 13px 17px;
@@ -170,6 +296,9 @@
       background: var(--bot-bg);
       border: 1px solid var(--border);
       border-bottom-left-radius: 4px;
+    }
+    .bubble-row.bot .bubble {
+      max-width: calc(100% - 58px);
     }
 
     /* Citations */
@@ -201,7 +330,7 @@
       font-weight: 700;
       font-family: monospace;
       font-size: 0.95rem;
-      color: #60a5fa;
+      color: #fca5a5;
     }
     .severity-badge {
       padding: 2px 9px;
@@ -293,7 +422,7 @@
       font-size: 0.82rem;
       cursor: default;
     }
-    .ticket-item .ti-id { font-family: monospace; color: #60a5fa; font-weight: 700; font-size: 0.83rem; }
+    .ticket-item .ti-id { font-family: monospace; color: #fca5a5; font-weight: 700; font-size: 0.83rem; }
     .ticket-item .ti-title { margin-top: 3px; color: var(--text); }
     .no-tickets {
       text-align: center;
@@ -339,14 +468,14 @@
       width: 36px; height: 36px;
       border: none;
       border-radius: 10px;
-      background: var(--accent);
+      background: #7f3b45;
       color: #fff;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       font-size: 16px;
       flex-shrink: 0;
       transition: opacity 0.15s, box-shadow 0.15s;
-      box-shadow: 0 0 10px var(--accent-glow);
+      box-shadow: 0 0 8px rgba(127, 59, 69, 0.28);
       align-self: flex-end;
     }
     #send-btn:hover:not(:disabled) { opacity: 0.85; }
@@ -360,6 +489,7 @@
 
     /* ── Responsive ──────────────────────────────────────────────── */
     @media (max-width: 640px) {
+      .info-sidebar { display: none; }
       .sidebar { display: none; }
       header p { display: none; }
     }
@@ -369,7 +499,6 @@
 
 <!-- ── Header ──────────────────────────────────────────────────── -->
 <header>
-  <div class="logo">🧞</div>
   <div>
     <h1>SupportGenie</h1>
     <p>AI-powered product support assistant</p>
@@ -379,11 +508,36 @@
 
 <div class="layout">
 
+  <aside class="info-sidebar">
+    <button class="info-sidebar-toggle" id="info-sidebar-toggle" type="button" aria-label="Collapse sidebar" aria-expanded="true">
+      ‹
+    </button>
+    <div class="info-sidebar-content">
+      <div class="info-logo">
+        <img src="/static/images/imgbin_ac550f079a500c8eb79a19ccdd513c08.png" alt="SupportGenie logo" />
+      </div>
+      <h3>What SupportGenie Does</h3>
+      <p>
+        SupportGenie answers product questions using your knowledge base, cites the source articles it used,
+        and can help create structured support tickets when you report issues.
+      </p>
+      <details class="ticket-help">
+        <summary>How to Submit Tickets</summary>
+        <p>
+          Provide details about the issue, when it started, and who is impacted. 
+        </p>
+        <p>
+          Include severity terms such as low, medium, high, or critical so the ticket is prioritized correctly.
+        </p>
+      </details>
+    </div>
+  </aside>
+
   <!-- ── Chat column ──────────────────────────────────────────── -->
   <div class="chat-col">
     <div id="messages">
       <div class="welcome" id="welcome-card">
-        <span class="logo-lg">🧞</span>
+        <img class="logo-lg" src="/static/images/imgbin_ac550f079a500c8eb79a19ccdd513c08.png" alt="SupportGenie logo" />
         <h2>Hi, I'm SupportGenie!</h2>
         <p>Ask me anything about your product — I'll find answers from the knowledge base and cite my sources. I can also create support tickets for you.</p>
         <div class="chips">
@@ -430,9 +584,20 @@
   const sendBtn    = document.getElementById('send-btn');
   const ticketList = document.getElementById('ticket-list');
   const noTicketsMsg = document.getElementById('no-tickets-msg');
+  const infoSidebar = document.querySelector('.info-sidebar');
+  const infoSidebarToggle = document.getElementById('info-sidebar-toggle');
+  const assistantAvatarHtml = '<img class="assistant-lamp" src="/static/images/lamp.png" alt="SupportGenie lamp">';
 
   let history = [];
   let ticketCount = 0;
+
+  if (infoSidebar && infoSidebarToggle) {
+    infoSidebarToggle.addEventListener('click', () => {
+      const collapsed = infoSidebar.classList.toggle('collapsed');
+      infoSidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+      infoSidebarToggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    });
+  }
 
   // ── Auto-resize textarea ─────────────────────────────────────
   inputEl.addEventListener('input', () => {
@@ -460,6 +625,10 @@
     sendMessage(text);
   }
 
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   // ── Core send function ───────────────────────────────────────
   async function sendMessage(text) {
     hideWelcome();
@@ -473,12 +642,18 @@
     // Typing indicator
     const typingId = appendTyping();
 
+    // Artificial delay to make responses seem more thoughtful!
+    const artificialDelayMs = 1000 + Math.random() * 1000;
+
     try {
-      const res = await fetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history })
-      });
+      const [res] = await Promise.all([
+        fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, history })
+        }),
+        wait(artificialDelayMs)
+      ]);
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
@@ -510,7 +685,7 @@
 
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
-    avatar.textContent = '🧞';
+    avatar.innerHTML = assistantAvatarHtml;
 
     const wrapper = document.createElement('div');
     wrapper.style.maxWidth = 'calc(100% - 44px)';
@@ -528,18 +703,18 @@
       addTicketToSidebar(data.ticket);
     }
 
-    // Source pills
-    if (data.sources && data.sources.length > 0) {
-      const srcDiv = document.createElement('div');
-      srcDiv.className = 'sources';
-      data.sources.forEach(s => {
-        const pill = document.createElement('div');
-        pill.className = 'source-pill';
-        pill.innerHTML = `<span class="src-id">[${escHtml(s.id)}]</span> ${escHtml(s.title)} <span style="opacity:0.5">${(s.score * 100).toFixed(0)}%</span>`;
-        srcDiv.appendChild(pill);
-      });
-      wrapper.appendChild(srcDiv);
-    }
+    // // Source pills
+    // if (data.sources && data.sources.length > 0) {
+    //   const srcDiv = document.createElement('div');
+    //   srcDiv.className = 'sources';
+    //   data.sources.forEach(s => {
+    //     const pill = document.createElement('div');
+    //     pill.className = 'source-pill';
+    //     pill.innerHTML = `<span class="src-id">[${escHtml(s.id)}]</span> ${escHtml(s.title)} <span style="opacity:0.5">${(s.score * 100).toFixed(0)}%</span>`;
+    //     srcDiv.appendChild(pill);
+    //   });
+    //   wrapper.appendChild(srcDiv);
+    // }
 
     row.appendChild(avatar);
     row.appendChild(wrapper);
@@ -602,7 +777,11 @@
 
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
-    avatar.textContent = role === 'user' ? '👤' : '🧞';
+    if (role === 'user') {
+      avatar.textContent = '👤';
+    } else {
+      avatar.innerHTML = assistantAvatarHtml;
+    }
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
@@ -620,7 +799,7 @@
     row.className = 'bubble-row bot typing';
     row.id = id;
     row.innerHTML = `
-      <div class="avatar">🧞</div>
+      <div class="avatar">${assistantAvatarHtml}</div>
       <div class="bubble">
         <div class="typing-dots">
           <span></span><span></span><span></span>
