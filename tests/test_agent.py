@@ -191,6 +191,20 @@ class TestAgentFallback:
         result = chat("Can you open a ticket for a billing issue?", history=history)
         assert result["ticket"] is not None
 
+    def test_ticket_uses_default_title_in_fallback_mode(self):
+        from app.agent import chat
+
+        result = chat('Open a ticket for login failures. Title: SSO login outage')
+        assert result["ticket"] is not None
+        assert result["ticket"]["title"] == "Support Issue"
+
+    def test_ticket_uses_default_title_for_generic_request(self):
+        from app.agent import chat
+
+        result = chat("Open a ticket because my team cannot complete workflow XYZ in step 7")
+        assert result["ticket"] is not None
+        assert result["ticket"]["title"] == "Support Issue"
+
 
 # ── Ticket intent detection tests ───────────────────────────────────────────
 

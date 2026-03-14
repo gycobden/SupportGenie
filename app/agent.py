@@ -29,10 +29,20 @@ from app.tools import create_ticket
 
 logger = logging.getLogger(__name__)
 
+# Spec System prompt
+# SYSTEM_PROMPT = """You are SupportGenie, an AI support assistant.
+# - Retrieve answers from the knowledge base and cite document IDs in [faq_XX] format.
+# - If the user says "open ticket", "create ticket", "report issue", or similar, call the tool `create_ticket` with title, severity, and summary.
+# - Be concise, professional, and avoid hallucinations.
+# - If the answer is not in the knowledge base, say: "That information isn't available in the knowledge base."
+# - Always include citations like [faq_01] when referencing knowledge base articles."""
+
+# More detailed prompt
 SYSTEM_PROMPT = """You are SupportGenie, an AI support assistant.
 - Retrieve answers from the knowledge base and cite document IDs in [faq_XX] format.
 - If the user says "open ticket", "create ticket", "report issue", or similar, call the tool `create_ticket` with title, severity, and summary.
 - Be concise, professional, and avoid hallucinations.
+- If the user says something that is not a query and not a request for tickets, respond by guiding them to one of those two functions. 
 - If the answer is not in the knowledge base, say: "That information isn't available in the knowledge base."
 - Always include citations like [faq_01] when referencing knowledge base articles."""
 
@@ -69,6 +79,14 @@ _TOOLS_SCHEMA = [
 
 _GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 _GEMINI_DEFAULT_MODEL = "gemini-2.0-flash"
+_DEFAULT_TICKET_TITLE = "Support Issue"
+
+
+def _resolve_ticket_title(llm_title: str | None = None) -> str:
+    """Use the LLM-provided title when present, otherwise fallback to default."""
+    if llm_title and llm_title.strip():
+        return llm_title.strip()
+    return _DEFAULT_TICKET_TITLE
 
 
 def _resolve_provider() -> tuple[str, str, str] | None:
@@ -96,8 +114,8 @@ def _resolve_provider() -> tuple[str, str, str] | None:
     return None
 
 
-def _get_openai_client():
-    """Lazily create an OpenAI client for the resolved provider."""
+def _get_llm_client():
+    """Lazily create an OpenAI-compatible client for the resolved provider."""
     from openai import OpenAI  # type: ignore
 
     provider = _resolve_provider()
@@ -117,7 +135,7 @@ def _llm_chat(messages: List[Dict[str, Any]], use_tools: bool = True) -> Dict[st
     if provider is None:
         raise RuntimeError("No LLM API key is configured.")
     _api_key, _base_url, model = provider
-    client = _get_openai_client()
+    client = _get_llm_client()
 
     kwargs: Dict[str, Any] = {"model": model, "messages": messages}
     if use_tools:
@@ -128,39 +146,19 @@ def _llm_chat(messages: List[Dict[str, Any]], use_tools: bool = True) -> Dict[st
     message = response.choices[0].message
 
     tool_call = None
+    raw_message = message.model_dump(exclude_none=True)
     if message.tool_calls:
         tc = message.tool_calls[0]
+        parsed_args = tc.function.arguments
+        if isinstance(parsed_args, str):
+            parsed_args = json.loads(parsed_args)
         tool_call = {
+            "id": tc.id,
             "name": tc.function.name,
-            "arguments": json.loads(tc.function.arguments),
+            "arguments": parsed_args,
         }
 
-    return {"content": message.content, "tool_call": tool_call}
-
-
-def _is_ticket_request(text: str) -> bool:
-    """Heuristic: detect ticket-creation intent in the user message."""
-    lower = text.lower()
-    # Action keywords that indicate intent to create/submit something
-    action_patterns = [
-        r"\bopen\b",
-        r"\bcreate\b",
-        r"\bfile\b",
-        r"\bsubmit\b",
-        r"\blog\b",
-        r"\braise\b",
-        r"\breport\b",
-    ]
-    # Object keywords — a ticket, bug, or issue is being referenced
-    object_patterns = [
-        r"\bticket\b",
-        r"\bbug\b",
-        r"\bissue\b",
-    ]
-    has_action = any(re.search(p, lower) for p in action_patterns)
-    has_object = any(re.search(p, lower) for p in object_patterns)
-    return has_action and has_object
-
+    return {"content": message.content, "tool_call": tool_call, "raw_message": raw_message}
 
 def chat(user_message: str, history: List[Dict[str, str]] | None = None) -> Dict[str, Any]:
     """
@@ -209,33 +207,21 @@ def chat(user_message: str, history: List[Dict[str, str]] | None = None) -> Dict
 
             if result["tool_call"] and result["tool_call"]["name"] == "create_ticket":
                 args = result["tool_call"]["arguments"]
+                ticket_title = _resolve_ticket_title(llm_title=args.get("title"))
                 ticket = create_ticket(
-                    title=args.get("title", "Support Issue"),
+                    title=ticket_title,
                     severity=args.get("severity", "medium"),
                     summary=args.get("summary", user_message),
                 )
                 # Second LLM call to get the final textual response
                 tool_result_msg = {
                     "role": "tool",
-                    "tool_call_id": "call_0",
+                    "tool_call_id": result["tool_call"]["id"],
                     "content": json.dumps(ticket),
                 }
-                messages.append(
-                    {
-                        "role": "assistant",
-                        "content": result["content"],
-                        "tool_calls": [
-                            {
-                                "id": "call_0",
-                                "type": "function",
-                                "function": {
-                                    "name": "create_ticket",
-                                    "arguments": json.dumps(args),
-                                },
-                            }
-                        ],
-                    }
-                )
+                # Preserve provider-specific metadata (e.g., Gemini thought_signature)
+                # by forwarding the raw assistant message from the tool-call turn.
+                messages.append(result["raw_message"])
                 messages.append(tool_result_msg)
                 follow_up = _llm_chat(messages, use_tools=False)
                 answer = follow_up["content"] or ""
@@ -269,6 +255,29 @@ def chat(user_message: str, history: List[Dict[str, str]] | None = None) -> Dict
 # Fallback: rule-based response when no LLM API key is available
 # ---------------------------------------------------------------------------
 
+def _is_ticket_request(text: str) -> bool:
+    """Heuristic: detect ticket-creation intent in the user message."""
+    lower = text.lower()
+    # Action keywords that indicate intent to create/submit something
+    action_patterns = [
+        r"\bopen\b",
+        r"\bcreate\b",
+        r"\bfile\b",
+        r"\bsubmit\b",
+        r"\blog\b",
+        r"\braise\b",
+        r"\breport\b",
+    ]
+    # Object keywords — a ticket, bug, or issue is being referenced
+    object_patterns = [
+        r"\bticket\b",
+        r"\bbug\b",
+        r"\bissue\b",
+    ]
+    has_action = any(re.search(p, lower) for p in action_patterns)
+    has_object = any(re.search(p, lower) for p in object_patterns)
+    return has_action and has_object
+
 def _fallback_reply(
     user_message: str,
     retrieved: list,
@@ -287,18 +296,17 @@ def _fallback_reply(
                 severity = level
                 break
 
-        # Build a title from the most relevant KB entry
-        top_doc = retrieved[0][0] if retrieved else {"title": "Support Issue"}
+        ticket_title = _resolve_ticket_title()
         ticket = create_ticket(
-            title=f"Issue: {top_doc['title']}",
+            title=ticket_title,
             severity=severity,
             summary=user_message,
         )
-        top_ids = [doc["id"] for doc, _ in retrieved[:3]]
-        citations_str = " ".join(f"[{i}]" for i in top_ids)
+        # top_ids = [doc["id"] for doc, _ in retrieved[:3]]
+        # citations_str = " ".join(f"[{i}]" for i in top_ids)
         answer = (
             f"I've created a support ticket for you. "
-            f"Here is a summary of relevant knowledge base articles: {citations_str}.\n\n"
+            # f"Here is a summary of relevant knowledge base articles: {citations_str}.\n\n"
             f"Ticket details are shown below."
         )
         return answer, ticket

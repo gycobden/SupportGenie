@@ -347,6 +347,37 @@
     .ticket-field { margin-top: 6px; }
     .ticket-field label { color: var(--text-muted); font-size: 0.78rem; margin-bottom: 2px; display: block; }
     .ticket-field span  { color: var(--text); }
+    .ticket-field .tk-title {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #ffe3e7;
+    }
+    .ticket-json {
+      margin-top: 10px;
+      border-top: 1px dashed var(--border);
+      padding-top: 8px;
+    }
+    .ticket-json summary {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      user-select: none;
+    }
+    .ticket-json pre {
+      margin-top: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 0.74rem;
+      line-height: 1.45;
+      color: var(--text-muted);
+      max-height: 180px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
 
     /* Source pills */
     .sources {
@@ -423,7 +454,21 @@
       cursor: default;
     }
     .ticket-item .ti-id { font-family: monospace; color: #fca5a5; font-weight: 700; font-size: 0.83rem; }
-    .ticket-item .ti-title { margin-top: 3px; color: var(--text); }
+    .ticket-item .ti-title {
+      margin-top: 4px;
+      color: #ffe3e7;
+      font-size: 0.92rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .ticket-item .ti-summary {
+      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     .no-tickets {
       text-align: center;
       color: var(--text-muted);
@@ -522,12 +567,15 @@
         and can help create structured support tickets when you report issues.
       </p>
       <details class="ticket-help">
-        <summary>How to Submit Tickets</summary>
+        <summary>Submitting Tickets</summary>
         <p>
           Provide details about the issue, when it started, and who is impacted. 
         </p>
         <p>
           Include severity terms such as low, medium, high, or critical so the ticket is prioritized correctly.
+        </p>
+        <p>
+          Optionally, provide a title to distinguish your ticket.
         </p>
       </details>
     </div>
@@ -643,7 +691,7 @@
     const typingId = appendTyping();
 
     // Artificial delay to make responses seem more thoughtful!
-    const artificialDelayMs = 1000 + Math.random() * 1000;
+    const artificialDelayMs = 0 //1000 + Math.random() * 1000;
 
     try {
       const [res] = await Promise.all([
@@ -738,6 +786,7 @@
   // ── Ticket card ──────────────────────────────────────────────
   function buildTicketCard(ticket) {
     const sevClass = 'sev-' + (ticket.severity || 'medium').toLowerCase();
+    const rawJson = escHtml(JSON.stringify(ticket, null, 2));
     const card = document.createElement('div');
     card.className = 'ticket-card';
     card.innerHTML = `
@@ -747,11 +796,16 @@
       </div>
       <div class="ticket-field">
         <label>Title</label>
-        <span>${escHtml(ticket.title)}</span>
+        <span class="tk-title">${escHtml(ticket.title)}</span>
       </div>
       <div class="ticket-field">
         <label>Summary</label>
         <span>${escHtml(ticket.summary)}</span>
+      </div>
+      <details class="ticket-json">
+        <summary>Show raw JSON</summary>
+        <pre>${rawJson}</pre>
+      </details>
       </div>`;
     return card;
   }
@@ -763,10 +817,16 @@
     const item = document.createElement('div');
     item.className = 'ticket-item';
     const sevClass = 'sev-' + (ticket.severity || 'medium').toLowerCase();
+    const rawJson = escHtml(JSON.stringify(ticket, null, 2));
     item.innerHTML = `
       <div><span class="ti-id">${escHtml(ticket.ticket_id)}</span>
            <span class="severity-badge ${escHtml(sevClass)}" style="margin-left:6px">${escHtml(ticket.severity)}</span></div>
-      <div class="ti-title">${escHtml(ticket.title)}</div>`;
+      <div class="ti-title">${escHtml(ticket.title)}</div>
+      <div class="ti-summary">${escHtml(ticket.summary)}</div>
+      <details class="ticket-json">
+        <summary>Show raw JSON</summary>
+        <pre>${rawJson}</pre>
+      </details>`;
     ticketList.prepend(item);
   }
 
