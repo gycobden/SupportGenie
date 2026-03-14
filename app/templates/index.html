@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SupportGenie – AI Support Assistant</title>
+  <link rel="preload" as="image" href="/static/images/lamp.png" />
   <style>
     /* ── Reset & base ───────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -273,9 +274,10 @@
       display: block;
     }
     .avatar .assistant-lamp {
+      display: block;
       transform: scaleX(-1);
-      width: 150%;
-      height: 150%;
+      width: 60px;
+      height: 60px;
       object-fit: contain;
     }
 
@@ -634,7 +636,7 @@
   const noTicketsMsg = document.getElementById('no-tickets-msg');
   const infoSidebar = document.querySelector('.info-sidebar');
   const infoSidebarToggle = document.getElementById('info-sidebar-toggle');
-  const assistantAvatarHtml = '<img class="assistant-lamp" src="/static/images/lamp.png" alt="SupportGenie lamp">';
+  const assistantAvatarHtml = '<img class="assistant-lamp" src="/static/images/lamp.png" alt="SupportGenie lamp" width="60" height="60" loading="eager" decoding="async">';
 
   let history = [];
   let ticketCount = 0;
@@ -750,19 +752,6 @@
       wrapper.appendChild(tc);
       addTicketToSidebar(data.ticket);
     }
-
-    // // Source pills
-    // if (data.sources && data.sources.length > 0) {
-    //   const srcDiv = document.createElement('div');
-    //   srcDiv.className = 'sources';
-    //   data.sources.forEach(s => {
-    //     const pill = document.createElement('div');
-    //     pill.className = 'source-pill';
-    //     pill.innerHTML = `<span class="src-id">[${escHtml(s.id)}]</span> ${escHtml(s.title)} <span style="opacity:0.5">${(s.score * 100).toFixed(0)}%</span>`;
-    //     srcDiv.appendChild(pill);
-    //   });
-    //   wrapper.appendChild(srcDiv);
-    // }
 
     row.appendChild(avatar);
     row.appendChild(wrapper);
