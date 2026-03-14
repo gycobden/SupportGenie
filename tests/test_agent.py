@@ -198,7 +198,7 @@ class TestAgentFallback:
         assert result["ticket"] is not None
         assert result["ticket"]["title"] == "Support Issue"
 
-    def test_ticket_uses_default_title_when_no_llm_title(self):
+    def test_ticket_uses_default_title_for_generic_request(self):
         from app.agent import chat
 
         result = chat("Open a ticket because my team cannot complete workflow XYZ in step 7")
